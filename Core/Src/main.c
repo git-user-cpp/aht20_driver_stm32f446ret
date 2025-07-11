@@ -3,7 +3,6 @@
 /*
  * aht20_driver_stm32f446ret
  * driver for aht20 temperature and humidity sensor
- *
  * Copyright (C) 2025 Andrew Kushyk
  *
  * This program is free software: you can redistribute it and/or modify
