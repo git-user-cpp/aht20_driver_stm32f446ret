@@ -183,6 +183,7 @@ int main(void)
 
 		aht20_calculate_measurments(measured_data, &humidity, &temperature_c, &temperature_f);
 		transmit_data(humidity, temperature_c, temperature_f);
+
 		HAL_Delay(1000);
 		/* USER CODE END WHILE */
 

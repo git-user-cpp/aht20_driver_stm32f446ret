@@ -20,6 +20,7 @@
 #include "AHT20.h"
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 /*
  * device address for AHT20
@@ -30,12 +31,20 @@
 static const uint16_t DEVICE_ADDRESS = (0x38 << 1);
 
 /*
+ * performs soft resetting of the sensor
+ *
+ * Datasheet: AHT20 Product manuals
+ * 5.5 Soft reset
+ */
+static uint8_t SOFT_RESET_CMD = 0xba;
+
+/*
  * get status command. is needed for sending to device after power on
  *
  * Datasheet: AHT20 Product manuals
  * 5.4 Sensor reading process, paragraph 1
  */
-static uint8_t GET_STATUS = 0x71;
+static uint8_t GET_STATUS_CMD = 0x71;
 
 /*
  * array for calibration initialization
@@ -54,13 +63,18 @@ static uint8_t INIT_CMD[3] = {0xbe, 0x08, 0x00};
 static uint8_t MEASURE_CMD[3] = {0xac, 0x33, 0x00};
 
 /*
+ * calculates crc8 for given data
+ */
+static uint8_t calculate_crc(uint8_t *data);
+
+/*
  * sends reads status_word for further calibration verification
  *
  * Datasheet: AHT20 Product manuals
  * 5.3 Send command
  */
 aht20_status_t aht20_get_calibration_status(I2C_HandleTypeDef *hi2c, UART_HandleTypeDef *huart, uint8_t *status_word, uint16_t status_word_size) {
-	if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, &GET_STATUS, (uint16_t)sizeof(GET_STATUS), HAL_MAX_DELAY)) {
+	if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, &GET_STATUS_CMD, (uint16_t)sizeof(GET_STATUS_CMD), HAL_MAX_DELAY)) {
 		return AHT20_STATUS_NOT_TRANSMITTED;
 	}
 
@@ -92,7 +106,7 @@ aht20_status_t aht20_check_calibration(uint8_t status_word) {
  * 5.4 Sensor reading process, paragraph 1
  */
 aht20_status_t aht20_calibrate(I2C_HandleTypeDef *hi2c, uint8_t status_word) {
-	if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, INIT_CMD, 3, HAL_MAX_DELAY)) {
+	if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, INIT_CMD, (uint16_t)sizeof(INIT_CMD), HAL_MAX_DELAY)) {
 		return AHT20_STATUS_NOT_TRANSMITTED;
 	}
 
@@ -106,18 +120,42 @@ aht20_status_t aht20_calibrate(I2C_HandleTypeDef *hi2c, uint8_t status_word) {
  * 5.4 Sensor reading process, paragraph 2
  */
 aht20_status_t aht20_measure(I2C_HandleTypeDef *hi2c, uint8_t *measured_data) {
-	if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, MEASURE_CMD, 3, HAL_MAX_DELAY)) {
+	uint8_t received_crc = 0;
+
+	if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, MEASURE_CMD, (uint16_t)sizeof(MEASURE_CMD), HAL_MAX_DELAY)) {
 		return AHT20_STATUS_NOT_TRANSMITTED;
 	}
 	HAL_Delay(80);
 
 	uint8_t measuring_status = 0;
-	HAL_I2C_Master_Receive(hi2c, DEVICE_ADDRESS, &measuring_status, 1, HAL_MAX_DELAY);
+	HAL_I2C_Master_Receive(hi2c, DEVICE_ADDRESS, &measuring_status, (uint16_t)sizeof(measuring_status), HAL_MAX_DELAY);
 
-	if(measuring_status & (1 << 7)) {
+	uint8_t all_data[7];
+	if (measuring_status & (1 << 7)) {
 		return AHT20_STATUS_NOT_MEASURED;
-	}else{
-		HAL_I2C_Master_Receive(hi2c, DEVICE_ADDRESS, measured_data, 6, HAL_MAX_DELAY);
+	} else {
+		HAL_I2C_Master_Receive(hi2c, DEVICE_ADDRESS, all_data, (uint16_t)sizeof(all_data), HAL_MAX_DELAY);
+	}
+
+	// Copy 6 data bytes to measured_data
+	for (uint8_t i = 0; i < 6; ++i) {
+		measured_data[i] = all_data[i];
+	}
+	received_crc = all_data[6]; // CRC is the 7th byte
+
+	uint8_t calculated_crc = calculate_crc(measured_data);
+	if (calculated_crc == received_crc) {
+		uint8_t ack = 0x06;
+		if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, &ack, (uint16_t)sizeof(ack), HAL_MAX_DELAY)) {
+			return AHT20_STATUS_NOT_TRANSMITTED;
+		}
+	} else {
+		uint8_t nack = 0x15;
+		if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, &nack, (uint16_t)sizeof(nack), HAL_MAX_DELAY)) {
+			return AHT20_STATUS_NOT_TRANSMITTED;
+		}
+
+		aht20_soft_reset(hi2c);
 	}
 
 	return AHT20_STATUS_OK;
@@ -138,3 +176,41 @@ void aht20_calculate_measurments(uint8_t *measured_data, float *humidity, float 
 	*temp_c = (((float)raw_temperature * 200.0) / 1048576.0) - 50.0;
 	*temp_f = *temp_c * 9.0 / 5.0 + 32.0;
 }
+
+/*
+ * resets the sensor without turning off the power supply
+ *
+ * Datasheet: AHT20 Product manuals
+ * 5.5 Soft reset
+ */
+aht20_status_t aht20_soft_reset(I2C_HandleTypeDef *hi2c) {
+	if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, &SOFT_RESET_CMD, (uint16_t)sizeof(SOFT_RESET_CMD), HAL_MAX_DELAY)) {
+		return AHT20_STATUS_NOT_TRANSMITTED;
+	}
+
+	HAL_Delay(20);
+	return AHT20_STATUS_OK;
+}
+
+/*
+ * calculates crc8 for given data
+ */
+static uint8_t calculate_crc(uint8_t *data) {
+    uint8_t crc = 0xFF;
+    uint8_t i = 0, j = 0;
+
+    for (; i < 6; ++i) {
+        crc ^= data[i];
+        for (j = 0; j < 8; ++j) {
+            if (crc & 0x80) {
+                crc = (crc << 1) ^ 0x31;
+            } else {
+                crc <<= 1;
+            }
+        }
+    }
+
+    return crc;
+}
+
+
