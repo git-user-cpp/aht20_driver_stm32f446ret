@@ -20,6 +20,7 @@
 #include "AHT20.h"
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 /*
  * device address for AHT20
@@ -52,6 +53,8 @@ static uint8_t INIT_CMD[3] = {0xbe, 0x08, 0x00};
  * 5.4 Sensor reading process, paragraph 2
  */
 static uint8_t MEASURE_CMD[3] = {0xac, 0x33, 0x00};
+
+static uint8_t calculate_crc(uint8_t *data);
 
 /*
  * sends reads status_word for further calibration verification
@@ -106,6 +109,8 @@ aht20_status_t aht20_calibrate(I2C_HandleTypeDef *hi2c, uint8_t status_word) {
  * 5.4 Sensor reading process, paragraph 2
  */
 aht20_status_t aht20_measure(I2C_HandleTypeDef *hi2c, uint8_t *measured_data) {
+	uint8_t received_crc = 0;
+
 	if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, MEASURE_CMD, 3, HAL_MAX_DELAY)) {
 		return AHT20_STATUS_NOT_TRANSMITTED;
 	}
@@ -114,13 +119,54 @@ aht20_status_t aht20_measure(I2C_HandleTypeDef *hi2c, uint8_t *measured_data) {
 	uint8_t measuring_status = 0;
 	HAL_I2C_Master_Receive(hi2c, DEVICE_ADDRESS, &measuring_status, 1, HAL_MAX_DELAY);
 
-	if(measuring_status & (1 << 7)) {
+	uint8_t all_data[7];
+	if (measuring_status & (1 << 7)) {
 		return AHT20_STATUS_NOT_MEASURED;
-	}else{
-		HAL_I2C_Master_Receive(hi2c, DEVICE_ADDRESS, measured_data, 6, HAL_MAX_DELAY);
+	} else {
+		HAL_I2C_Master_Receive(hi2c, DEVICE_ADDRESS, all_data, 7, HAL_MAX_DELAY);
+	}
+
+	// Copy 6 data bytes to measured_data
+	for (uint8_t i = 0; i < 6; i++) {
+		measured_data[i] = all_data[i];
+	}
+	received_crc = all_data[6]; // CRC is the 7th byte
+
+	uint8_t calculated_crc = calculate_crc(measured_data);
+	if (calculated_crc == received_crc) {
+		uint8_t ack = 0x06;
+		if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, &ack, 1, HAL_MAX_DELAY)) {
+			return AHT20_STATUS_NOT_TRANSMITTED;
+		}
+	} else {
+		uint8_t nack = 0x15;
+		if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, &nack, 1, HAL_MAX_DELAY)) {
+			return AHT20_STATUS_NOT_TRANSMITTED;
+		}
 	}
 
 	return AHT20_STATUS_OK;
+}
+
+/*
+ * calculates crc8 for given data
+ */
+static uint8_t calculate_crc(uint8_t *data) {
+    uint8_t crc = 0xFF;
+    uint8_t i = 0, j = 0;
+
+    for (; i < 6; ++i) {
+        crc ^= data[i];
+        for (j = 0; j < 8; ++j) {
+            if (crc & 0x80) {
+                crc = (crc << 1) ^ 0x31;
+            } else {
+                crc <<= 1;
+            }
+        }
+    }
+
+    return crc;
 }
 
 /*
