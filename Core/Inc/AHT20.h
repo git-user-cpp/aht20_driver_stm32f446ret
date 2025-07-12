@@ -64,6 +64,14 @@ aht20_status_t aht20_calibrate(I2C_HandleTypeDef *hi2c, uint8_t status_word);
 aht20_status_t aht20_measure(I2C_HandleTypeDef *hi2c, uint8_t *measured_data);
 
 /*
+ * resets the sensor without turning off the power supply
+ *
+ * Datasheet: AHT20 Product manuals
+ * 5.5 Soft reset
+ */
+aht20_status_t aht20_soft_reset(I2C_HandleTypeDef *hi2c);
+
+/*
  * calculates measured_data and writes the calculation in provided variables
  *
  * Datasheet: AHT20 Product manuals
