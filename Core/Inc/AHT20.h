@@ -31,6 +31,12 @@ typedef enum {
 	AHT20_STATUS_NOT_MEASURED,
 } aht20_status_t;
 
+typedef struct {
+	uint8_t measured_data[7];
+	float humidity;
+	float temperature_c;
+	float temperature_f;
+} aht20_data_t;
 /*
  * sends reads status_word for further calibration verification
  *
@@ -61,7 +67,7 @@ aht20_status_t aht20_calibrate(I2C_HandleTypeDef *hi2c, uint8_t status_word);
  * Datasheet: AHT20 Product manuals
  * 5.4 Sensor reading process, paragraph 2
  */
-aht20_status_t aht20_measure(I2C_HandleTypeDef *hi2c, uint8_t *measured_data);
+aht20_status_t aht20_measure(I2C_HandleTypeDef *hi2c, uint8_t *measured_data, uint16_t measured_data_size);
 
 /*
  * resets the sensor without turning off the power supply

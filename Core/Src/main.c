@@ -89,7 +89,7 @@ void print_error(aht20_status_t status) {
 		/* doing nothing if ok */
 	}
 	else {
-		printf(debug_msg, "Unknown error\r\n");
+		sprintf(debug_msg, "Unknown error\r\n");
 		UART_Send_String(debug_msg);
 	}
 }
@@ -145,7 +145,6 @@ int main(void)
 
 	/* getting info about sensor calibration */
 	status = aht20_get_calibration_status(&hi2c1, &huart2, &status_word, (uint16_t)sizeof(status_word));
-
 	if (status != AHT20_STATUS_OK) {
 		print_error(status);
 		return 1;
@@ -155,7 +154,6 @@ int main(void)
 		if (status != AHT20_STATUS_OK) {
 			/* calibrates if not calibrated*/
 			status = aht20_calibrate(&hi2c1, status_word);
-
 			if (status != AHT20_STATUS_OK) {
 				print_error(status);
 				return 2;
@@ -167,22 +165,20 @@ int main(void)
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
-	uint8_t measured_data[6] = {0};
-	float humidity = 0.0;
-	float temperature_c = 0.0;
-	float temperature_f = 0.0;
+	aht20_data_t sensor_data = {0};
 
 	while (1)
 	{
 		/* triggering measuring */
-		status = aht20_measure(&hi2c1, measured_data);
+		status = aht20_measure(&hi2c1, sensor_data.measured_data, (uint16_t)sizeof(sensor_data.measured_data));
 		if (status != AHT20_STATUS_OK) {
 			print_error(status);
-			return 3;
+			aht20_soft_reset(&hi2c1);
+			continue;
 		}
 
-		aht20_calculate_measurments(measured_data, &humidity, &temperature_c, &temperature_f);
-		transmit_data(humidity, temperature_c, temperature_f);
+		aht20_calculate_measurments(sensor_data.measured_data, &sensor_data.humidity, &sensor_data.temperature_c, &sensor_data.temperature_f);
+		transmit_data(sensor_data.humidity, sensor_data.temperature_c, sensor_data.temperature_f);
 
 		HAL_Delay(1000);
 		/* USER CODE END WHILE */
