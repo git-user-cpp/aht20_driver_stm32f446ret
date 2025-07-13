@@ -63,6 +63,16 @@ static uint8_t INIT_CMD[3] = {0xbe, 0x08, 0x00};
 static uint8_t MEASURE_CMD[3] = {0xac, 0x33, 0x00};
 
 /*
+ * acknowledge signal
+ */
+static uint8_t ACK_CMD = 0x06;
+
+/*
+ * not acknowledge signal
+ */
+static uint8_t NACK_CMD = 0x15;
+
+/*
  * calculates crc8 for given data
  */
 static uint8_t calculate_crc(uint8_t *data);
@@ -133,15 +143,13 @@ aht20_status_t aht20_measure(I2C_HandleTypeDef *hi2c, uint8_t *measured_data, ui
 		return AHT20_STATUS_NOT_MEASURED;
 	}
 
-	uint8_t calculated_crc = calculate_crc(measured_data + 1);
-	if (calculated_crc == measured_data[0]) {
-		uint8_t ack = 0x06;
-		if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, &ack, (uint16_t)sizeof(ack), HAL_MAX_DELAY)) {
+	uint8_t calculated_crc = calculate_crc(measured_data);
+	if (calculated_crc == measured_data[6]) {
+		if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, &ACK_CMD, (uint16_t)sizeof(ACK_CMD), HAL_MAX_DELAY)) {
 			return AHT20_STATUS_NOT_TRANSMITTED;
 		}
 	} else {
-		uint8_t nack = 0x15;
-		if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, &nack, (uint16_t)sizeof(nack), HAL_MAX_DELAY)) {
+		if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, &NACK_CMD, (uint16_t)sizeof(NACK_CMD), HAL_MAX_DELAY)) {
 			return AHT20_STATUS_NOT_TRANSMITTED;
 		}
 
