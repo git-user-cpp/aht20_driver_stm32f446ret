@@ -31,12 +31,16 @@ typedef enum {
 	AHT20_STATUS_NOT_MEASURED,
 } aht20_status_t;
 
+/*
+ * struct for holding measurment data
+ */
 typedef struct {
 	uint8_t measured_data[7];
 	float humidity;
 	float temperature_c;
 	float temperature_f;
 } aht20_data_t;
+
 /*
  * sends reads status_word for further calibration verification
  *
