@@ -210,5 +210,3 @@ static uint8_t calculate_crc(uint8_t *data) {
 
     return crc;
 }
-
-
