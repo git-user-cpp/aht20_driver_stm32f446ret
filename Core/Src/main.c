@@ -89,7 +89,7 @@ void print_error(aht20_status_t status) {
 		/* doing nothing if ok */
 	}
 	else {
-		printf(debug_msg, "Unknown error\r\n");
+		sprintf(debug_msg, "Unknown error\r\n");
 		UART_Send_String(debug_msg);
 	}
 }
@@ -167,7 +167,7 @@ int main(void)
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
-	uint8_t measured_data[6] = {0};
+	uint8_t measured_data[7] = {0};
 	float humidity = 0.0;
 	float temperature_c = 0.0;
 	float temperature_f = 0.0;
@@ -175,10 +175,11 @@ int main(void)
 	while (1)
 	{
 		/* triggering measuring */
-		status = aht20_measure(&hi2c1, measured_data);
+		status = aht20_measure(&hi2c1, measured_data, (uint16_t)sizeof(measured_data));
 		if (status != AHT20_STATUS_OK) {
 			print_error(status);
-			return 3;
+			aht20_soft_reset(&hi2c1);
+			continue;
 		}
 
 		aht20_calculate_measurments(measured_data, &humidity, &temperature_c, &temperature_f);

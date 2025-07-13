@@ -119,32 +119,22 @@ aht20_status_t aht20_calibrate(I2C_HandleTypeDef *hi2c, uint8_t status_word) {
  * Datasheet: AHT20 Product manuals
  * 5.4 Sensor reading process, paragraph 2
  */
-aht20_status_t aht20_measure(I2C_HandleTypeDef *hi2c, uint8_t *measured_data) {
-	uint8_t received_crc = 0;
-
+aht20_status_t aht20_measure(I2C_HandleTypeDef *hi2c, uint8_t *measured_data, uint16_t measured_data_size) {
 	if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, MEASURE_CMD, (uint16_t)sizeof(MEASURE_CMD), HAL_MAX_DELAY)) {
 		return AHT20_STATUS_NOT_TRANSMITTED;
 	}
 	HAL_Delay(80);
 
-	uint8_t measuring_status = 0;
-	HAL_I2C_Master_Receive(hi2c, DEVICE_ADDRESS, &measuring_status, (uint16_t)sizeof(measuring_status), HAL_MAX_DELAY);
+	if (HAL_OK != HAL_I2C_Master_Receive(hi2c, DEVICE_ADDRESS, measured_data, measured_data_size, HAL_MAX_DELAY)) {
+		return AHT20_STATUS_NOT_RECEIVED;
+	}
 
-	uint8_t all_data[7];
-	if (measuring_status & (1 << 7)) {
+	if (measured_data[0] & (1 << 7)) {
 		return AHT20_STATUS_NOT_MEASURED;
-	} else {
-		HAL_I2C_Master_Receive(hi2c, DEVICE_ADDRESS, all_data, (uint16_t)sizeof(all_data), HAL_MAX_DELAY);
 	}
 
-	// Copy 6 data bytes to measured_data
-	for (uint8_t i = 0; i < 6; ++i) {
-		measured_data[i] = all_data[i];
-	}
-	received_crc = all_data[6]; // CRC is the 7th byte
-
-	uint8_t calculated_crc = calculate_crc(measured_data);
-	if (calculated_crc == received_crc) {
+	uint8_t calculated_crc = calculate_crc(measured_data + 1);
+	if (calculated_crc == measured_data[0]) {
 		uint8_t ack = 0x06;
 		if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, &ack, (uint16_t)sizeof(ack), HAL_MAX_DELAY)) {
 			return AHT20_STATUS_NOT_TRANSMITTED;
