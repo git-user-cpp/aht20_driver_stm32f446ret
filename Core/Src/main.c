@@ -25,7 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "aht20.h"
+#include "bl.h"
 #include "utils.h"
 #include <stdio.h>
 #include <string.h>
@@ -64,18 +64,7 @@ static void MX_I2C1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-/* just a wrapper for HAL_UART_Transmit*/
-void UART_Send_String(const char* str)
-{
-	HAL_UART_Transmit(&huart2, (uint8_t*)str, strlen(str), HAL_MAX_DELAY);
-}
 
-/* transmits data to UART */
-void transmit_data(float humidity, float temperature_c, float temperature_f) {
-	char data_to_display[60] = "\0";
-	sprintf(data_to_display, "Humidity: %.2f%%, Temperature: %.2fC, %.2fF\r\n", humidity, temperature_c, temperature_f);
-	HAL_UART_Transmit(&huart2, (uint8_t *)data_to_display, strlen(data_to_display), HAL_MAX_DELAY);
-}
 /* USER CODE END 0 */
 
 /**
@@ -109,39 +98,20 @@ int main(void)
 	MX_USART2_UART_Init();
 	MX_I2C1_Init();
 	/* USER CODE BEGIN 2 */
-
-	/*
-	 * Datasheet: AHT20 Product manuals
-	 * 5.4 Sensor reading process, paragraph 1
-	 */
-	aht20_status_t status = AHT20_STATUS_OK;
-
-	/* getting info about sensor calibration */
-	status = aht20_validate_calibration(&hi2c1);
-	if (status != AHT20_STATUS_OK) {
-		print_error(&huart2, status);
+	if(BL_STATUS_OK != bl_run_sensor(&hi2c1, &huart2)) {
 		return 1;
 	}
-
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
-	aht20_data_t sensor_data = {0};
-
 	while (1)
 	{
-		/* triggering measuring */
-		status = aht20_measure(&hi2c1, sensor_data.measured_data, (uint16_t)sizeof(sensor_data.measured_data));
-		if (status != AHT20_STATUS_OK) {
-			print_error(&huart2, status);
-			aht20_soft_reset(&hi2c1);
-			continue;
+		if (BL_STATUS_OK != bl_process_sensor_data(&hi2c1, &huart2)) {
+			return 2;
 		}
 
-		aht20_calculate_measurments(sensor_data.measured_data, &sensor_data.humidity, &sensor_data.temperature_c, &sensor_data.temperature_f);
-		transmit_data(sensor_data.humidity, sensor_data.temperature_c, sensor_data.temperature_f);
-
+		bl_uart_transmit_sensor_data(&huart2);
 		HAL_Delay(1000);
 		/* USER CODE END WHILE */
 

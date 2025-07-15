@@ -17,16 +17,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#pragma once
-#include <aht20.h>
 #include "main.h"
 
-#ifdef DEBUGGING
 /*
- * prints error message via UART
+ * return statuses for business logic
  */
-void print_error(UART_HandleTypeDef *huart, aht20_status_t status);
-#endif
+typedef enum {
+	BL_STATUS_OK = 1,
+	BL_STATUS_RUN_FAILED,
+} bl_status_t;
 
-/* transmits data to UART */
-void transmit_data(UART_HandleTypeDef *huart, float humidity, float temperature_c, float temperature_f);
+/*
+ * runs calibration check. if wasn't calibrated, calibrates the sensor
+ */
+bl_status_t bl_run_sensor(I2C_HandleTypeDef *hi2c, UART_HandleTypeDef *huart);
+
+/*
+ * processes and calculates sensor data
+ */
+bl_status_t bl_process_sensor_data(I2C_HandleTypeDef *hi2c, UART_HandleTypeDef *huart);
+
+/*
+ * transmits formatted data to UART
+ */
+void bl_uart_transmit_sensor_data(UART_HandleTypeDef *huart);

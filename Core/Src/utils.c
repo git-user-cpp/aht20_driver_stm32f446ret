@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef DEBUGGING
 /*
  * prints error message via UART
  */
@@ -38,4 +39,12 @@ void print_error(UART_HandleTypeDef *huart, aht20_status_t status) {
         sprintf(debug_msg, "Unknown error\r\n");
     }
     HAL_UART_Transmit(huart, (uint8_t*)debug_msg, strlen(debug_msg), HAL_MAX_DELAY);
+}
+#endif
+
+/* transmits data to UART */
+void transmit_data(UART_HandleTypeDef *huart, float humidity, float temperature_c, float temperature_f) {
+	char data_to_display[60] = "\0";
+	sprintf(data_to_display, "Humidity: %.2f%%, Temperature: %.2fC, %.2fF\r\n", humidity, temperature_c, temperature_f);
+	HAL_UART_Transmit(huart, (uint8_t *)data_to_display, strlen(data_to_display), HAL_MAX_DELAY);
 }
