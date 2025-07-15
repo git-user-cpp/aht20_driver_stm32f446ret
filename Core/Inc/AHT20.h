@@ -47,7 +47,7 @@ typedef struct {
  * Datasheet: AHT20 Product manuals
  * 5.3 Send command
  */
-aht20_status_t aht20_get_calibration_status(I2C_HandleTypeDef *hi2c, UART_HandleTypeDef *huart, uint8_t *status_word, uint16_t status_word_size);
+aht20_status_t aht20_get_calibration_status(I2C_HandleTypeDef *hi2c, uint8_t *status_word, uint16_t status_word_size);
 
 /*
  * checks the 3rd bit of a received variable

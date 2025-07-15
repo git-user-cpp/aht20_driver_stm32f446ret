@@ -21,6 +21,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <assert.h>
+#include <stddef.h>
 
 /*
  * device address for AHT20
@@ -83,7 +85,10 @@ static uint8_t calculate_crc(uint8_t *data);
  * Datasheet: AHT20 Product manuals
  * 5.3 Send command
  */
-aht20_status_t aht20_get_calibration_status(I2C_HandleTypeDef *hi2c, UART_HandleTypeDef *huart, uint8_t *status_word, uint16_t status_word_size) {
+aht20_status_t aht20_get_calibration_status(I2C_HandleTypeDef *hi2c, uint8_t *status_word, uint16_t status_word_size) {
+	assert(hi2c != NULL);
+	assert(status_word != NULL);
+
 	if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, &GET_STATUS_CMD, (uint16_t)sizeof(GET_STATUS_CMD), HAL_MAX_DELAY)) {
 		return AHT20_STATUS_NOT_TRANSMITTED;
 	}
@@ -116,6 +121,8 @@ aht20_status_t aht20_check_calibration(uint8_t status_word) {
  * 5.4 Sensor reading process, paragraph 1
  */
 aht20_status_t aht20_calibrate(I2C_HandleTypeDef *hi2c, uint8_t status_word) {
+	assert(hi2c != NULL);
+
 	if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, INIT_CMD, (uint16_t)sizeof(INIT_CMD), HAL_MAX_DELAY)) {
 		return AHT20_STATUS_NOT_TRANSMITTED;
 	}
@@ -130,6 +137,9 @@ aht20_status_t aht20_calibrate(I2C_HandleTypeDef *hi2c, uint8_t status_word) {
  * 5.4 Sensor reading process, paragraph 2
  */
 aht20_status_t aht20_measure(I2C_HandleTypeDef *hi2c, uint8_t *measured_data, uint16_t measured_data_size) {
+	assert(hi2c != NULL);
+	assert(measured_data != NULL);
+
 	if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, MEASURE_CMD, (uint16_t)sizeof(MEASURE_CMD), HAL_MAX_DELAY)) {
 		return AHT20_STATUS_NOT_TRANSMITTED;
 	}
@@ -167,6 +177,11 @@ aht20_status_t aht20_measure(I2C_HandleTypeDef *hi2c, uint8_t *measured_data, ui
  * 6.2 Temperature transformation
  */
 void aht20_calculate_measurments(uint8_t *measured_data, float *humidity, float *temp_c, float *temp_f) {
+	assert(measured_data != NULL);
+	assert(humidity != NULL);
+	assert(temp_c != NULL);
+	assert(temp_f != NULL);
+
 	uint32_t raw_humidity = ((measured_data[1] << 12) | (measured_data[2] << 4) | (measured_data[3] >> 4));
 	uint32_t raw_temperature = (((measured_data[3] & 0x0F) << 16) | (measured_data[4] << 8) | measured_data[5]);
 
@@ -182,6 +197,8 @@ void aht20_calculate_measurments(uint8_t *measured_data, float *humidity, float 
  * 5.5 Soft reset
  */
 aht20_status_t aht20_soft_reset(I2C_HandleTypeDef *hi2c) {
+	assert(hi2c != NULL);
+
 	if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, &SOFT_RESET_CMD, (uint16_t)sizeof(SOFT_RESET_CMD), HAL_MAX_DELAY)) {
 		return AHT20_STATUS_NOT_TRANSMITTED;
 	}
@@ -194,6 +211,8 @@ aht20_status_t aht20_soft_reset(I2C_HandleTypeDef *hi2c) {
  * calculates crc8 for given data
  */
 static uint8_t calculate_crc(uint8_t *data) {
+	assert(data != NULL);
+
     uint8_t crc = 0xFF;
     uint8_t i = 0, j = 0;
 
