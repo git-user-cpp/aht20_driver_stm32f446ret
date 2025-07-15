@@ -31,6 +31,9 @@ typedef struct {
 	float temperature_f;
 } aht20_data_t;
 
+/*
+ * making api public
+ */
 extern const aht20_sensor_api_t aht20_api;
 
 /*

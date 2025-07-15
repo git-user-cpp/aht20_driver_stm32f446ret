@@ -21,11 +21,11 @@
 
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include <aht20.h>
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "aht20.h"
 #include "utils.h"
 #include <stdio.h>
 #include <string.h>
