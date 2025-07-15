@@ -20,7 +20,6 @@
 #include "AHT20.h"
 #include <stdio.h>
 #include <string.h>
-#include <math.h>
 #include <assert.h>
 #include <stddef.h>
 
