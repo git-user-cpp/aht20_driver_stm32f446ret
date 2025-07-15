@@ -18,10 +18,23 @@
  */
 
 #pragma once
-#include <aht20.h>
-#include "main.h"
 
 /*
- * prints error message via UART
+ * enum for status returns
  */
-void print_error(UART_HandleTypeDef *huart, aht20_status_t status);
+typedef enum {
+	AHT20_STATUS_OK = 1,
+	AHT20_STATUS_NOT_TRANSMITTED,
+	AHT20_STATUS_NOT_RECEIVED,
+	AHT20_STATUS_NOT_MEASURED,
+} aht20_status_t;
+
+/*
+ * api for aht20 sensor
+ */
+typedef struct {
+	aht20_status_t (*aht20_validate_calibration) (I2C_HandleTypeDef *hi2c);
+	aht20_status_t (*measure) (I2C_HandleTypeDef *hi2c, uint8_t *measured_data, uint16_t measured_data_size);
+	void (*calculate_measurments) (uint8_t *measured_data, float *humidity, float *temp_c, float *temp_f);
+	aht20_status_t (*soft_reset) (I2C_HandleTypeDef *hi2c);
+} aht20_sensor_api_t;

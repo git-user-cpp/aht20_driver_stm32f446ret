@@ -30,8 +30,6 @@ void print_error(UART_HandleTypeDef *huart, aht20_status_t status) {
         sprintf(debug_msg, "I2C initialization transmit error: 0x71\r\n");
     } else if (status == AHT20_STATUS_NOT_RECEIVED) {
         sprintf(debug_msg, "I2C initialization receive error: status_word\r\n");
-    } else if (status == AHT20_STATUS_NOT_CALIBRATED) {
-        sprintf(debug_msg, "I2C device calibration error\r\n");
     } else if (status == AHT20_STATUS_NOT_MEASURED) {
         sprintf(debug_msg, "I2C device couldn't perform measuring\r\n");
     } else if (status == AHT20_STATUS_OK) {

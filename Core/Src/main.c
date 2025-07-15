@@ -21,11 +21,11 @@
 
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+#include <aht20.h>
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "AHT20.h"
 #include "utils.h"
 #include <stdio.h>
 #include <string.h>
@@ -114,27 +114,13 @@ int main(void)
 	 * Datasheet: AHT20 Product manuals
 	 * 5.4 Sensor reading process, paragraph 1
 	 */
-	HAL_Delay(40);
-
-	uint8_t status_word = 0;
 	aht20_status_t status = AHT20_STATUS_OK;
 
 	/* getting info about sensor calibration */
-	status = aht20_get_calibration_status(&hi2c1, &status_word, (uint16_t)sizeof(status_word));
+	status = aht20_validate_calibration(&hi2c1);
 	if (status != AHT20_STATUS_OK) {
 		print_error(&huart2, status);
 		return 1;
-	} else {
-		/* checks if calibration is valid */
-		status = aht20_check_calibration(status_word);
-		if (status != AHT20_STATUS_OK) {
-			/* calibrates if not calibrated*/
-			status = aht20_calibrate(&hi2c1, status_word);
-			if (status != AHT20_STATUS_OK) {
-				print_error(&huart2, status);
-				return 2;
-			}
-		}
 	}
 
 	/* USER CODE END 2 */

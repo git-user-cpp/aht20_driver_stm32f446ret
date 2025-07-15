@@ -17,7 +17,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "AHT20.h"
+#include <aht20.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -73,6 +73,13 @@ static uint8_t ACK_CMD = 0x06;
  */
 static uint8_t NACK_CMD = 0x15;
 
+const aht20_sensor_api_t aht20_api = {
+		.aht20_validate_calibration = aht20_validate_calibration,
+		.measure = aht20_measure,
+		.calculate_measurments = aht20_calculate_measurments,
+		.soft_reset = aht20_soft_reset,
+};
+
 /*
  * calculates crc8 for given data
  */
@@ -84,48 +91,28 @@ static uint8_t calculate_crc(uint8_t *data);
  * Datasheet: AHT20 Product manuals
  * 5.3 Send command
  */
-aht20_status_t aht20_get_calibration_status(I2C_HandleTypeDef *hi2c, uint8_t *status_word, uint16_t status_word_size) {
+aht20_status_t aht20_validate_calibration(I2C_HandleTypeDef *hi2c) {
 	assert(hi2c != NULL);
-	assert(status_word != NULL);
+	uint8_t status_word = 0;
+
+	HAL_Delay(40);
 
 	if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, &GET_STATUS_CMD, (uint16_t)sizeof(GET_STATUS_CMD), HAL_MAX_DELAY)) {
 		return AHT20_STATUS_NOT_TRANSMITTED;
 	}
 
-	if (HAL_OK != HAL_I2C_Master_Receive(hi2c, DEVICE_ADDRESS, status_word, status_word_size, HAL_MAX_DELAY)) {
+	if (HAL_OK != HAL_I2C_Master_Receive(hi2c, DEVICE_ADDRESS, &status_word, (uint16_t)sizeof(status_word), HAL_MAX_DELAY)) {
 		return AHT20_STATUS_NOT_RECEIVED;
 	}
 
-	return AHT20_STATUS_OK;
-}
-
-/*
- * checks the 3rd bit of a received variable
- *
- * Datasheet: AHT20 Product manuals
- * 5.4 Sensor reading process, paragraph 1
- */
-aht20_status_t aht20_check_calibration(uint8_t status_word) {
 	if (status_word & (1 << 3)) {
 		return AHT20_STATUS_OK;
 	} else {
-		return AHT20_STATUS_NOT_CALIBRATED;
+		if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, INIT_CMD, (uint16_t)sizeof(INIT_CMD), HAL_MAX_DELAY)) {
+			return AHT20_STATUS_NOT_TRANSMITTED;
+		}
+		HAL_Delay(10);
 	}
-}
-
-/*
- * sends an array of integers to trigger sensor calibration
- *
- * Datasheet: AHT20 Product manuals
- * 5.4 Sensor reading process, paragraph 1
- */
-aht20_status_t aht20_calibrate(I2C_HandleTypeDef *hi2c, uint8_t status_word) {
-	assert(hi2c != NULL);
-
-	if (HAL_OK != HAL_I2C_Master_Transmit(hi2c, DEVICE_ADDRESS, INIT_CMD, (uint16_t)sizeof(INIT_CMD), HAL_MAX_DELAY)) {
-		return AHT20_STATUS_NOT_TRANSMITTED;
-	}
-
 	return AHT20_STATUS_OK;
 }
 
