@@ -73,6 +73,9 @@ static uint8_t ACK_CMD = 0x06;
  */
 static uint8_t NACK_CMD = 0x15;
 
+/*
+ * aht20 api
+ */
 const aht20_sensor_api_t aht20_api = {
 		.aht20_validate_calibration = aht20_validate_calibration,
 		.measure = aht20_measure,
