@@ -21,11 +21,12 @@
 
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+#include <aht20.h>
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "AHT20.h"
+#include "utils.h"
 #include <stdio.h>
 #include <string.h>
 /* USER CODE END Includes */
@@ -67,31 +68,6 @@ static void MX_I2C1_Init(void);
 void UART_Send_String(const char* str)
 {
 	HAL_UART_Transmit(&huart2, (uint8_t*)str, strlen(str), HAL_MAX_DELAY);
-}
-
-/* prints error message to UART based on received status */
-void print_error(aht20_status_t status) {
-	char debug_msg[64] = "\0";
-
-	if(status == AHT20_STATUS_NOT_TRANSMITTED) {
-		sprintf(debug_msg, "I2C initialization transmit error: 0x71\r\n");
-		UART_Send_String(debug_msg);
-	} else if (status == AHT20_STATUS_NOT_RECEIVED) {
-		sprintf(debug_msg, "I2C initialization recieve error: status_word\r\n");
-		UART_Send_String(debug_msg);
-	} else if (status == AHT20_STATUS_NOT_CALIBRATED) {
-		sprintf(debug_msg, "I2C device calibration error\r\n");
-		UART_Send_String(debug_msg);
-	} else if (status == AHT20_STATUS_NOT_MEASURED) {
-		sprintf(debug_msg, "I2C device couldn't perform measuring\r\n");
-		UART_Send_String(debug_msg);
-	} else if (status == AHT20_STATUS_OK) {
-		/* doing nothing if ok */
-	}
-	else {
-		sprintf(debug_msg, "Unknown error\r\n");
-		UART_Send_String(debug_msg);
-	}
 }
 
 /* transmits data to UART */
@@ -138,27 +114,13 @@ int main(void)
 	 * Datasheet: AHT20 Product manuals
 	 * 5.4 Sensor reading process, paragraph 1
 	 */
-	HAL_Delay(40);
-
-	uint8_t status_word = 0;
 	aht20_status_t status = AHT20_STATUS_OK;
 
 	/* getting info about sensor calibration */
-	status = aht20_get_calibration_status(&hi2c1, &huart2, &status_word, (uint16_t)sizeof(status_word));
+	status = aht20_validate_calibration(&hi2c1);
 	if (status != AHT20_STATUS_OK) {
-		print_error(status);
+		print_error(&huart2, status);
 		return 1;
-	} else {
-		/* checks if calibration is valid */
-		status = aht20_check_calibration(status_word);
-		if (status != AHT20_STATUS_OK) {
-			/* calibrates if not calibrated*/
-			status = aht20_calibrate(&hi2c1, status_word);
-			if (status != AHT20_STATUS_OK) {
-				print_error(status);
-				return 2;
-			}
-		}
 	}
 
 	/* USER CODE END 2 */
@@ -172,7 +134,7 @@ int main(void)
 		/* triggering measuring */
 		status = aht20_measure(&hi2c1, sensor_data.measured_data, (uint16_t)sizeof(sensor_data.measured_data));
 		if (status != AHT20_STATUS_OK) {
-			print_error(status);
+			print_error(&huart2, status);
 			aht20_soft_reset(&hi2c1);
 			continue;
 		}
