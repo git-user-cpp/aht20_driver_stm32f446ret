@@ -47,6 +47,9 @@ extern "C" {
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 
+/* remove the comment to enable debugging messages via UART */
+//#define DEBUGGING
+
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
