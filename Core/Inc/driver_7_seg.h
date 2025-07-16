@@ -1,7 +1,7 @@
 /*
- * aht20_driver_stm32f446ret
- * driver for aht20 temperature and humidity sensor
- * Copyright (C) 2025 Andrew Kushyk
+ * digital_thermomether
+ * digital thermometer built using stm32f446ret, AHT20 sensor and multi-function shield
+ * Copyright (C) 2025 Anatoliy Lizanets
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -18,15 +18,22 @@
  */
 
 #pragma once
-#include <aht20.h>
-#include "main.h"
+#include "driver_7_seg_api.h"
+#include <stdint.h>
 
-#ifdef DEBUGGING
+extern const driver_7_seg_api_t api_7_seg;
+
 /*
- * prints error message via UART
+ Initializes the 7-segment display driver.
  */
-void print_error(UART_HandleTypeDef *huart, aht20_status_t status);
-#endif
 
-/* transmits data to UART */
-void transmit_data(UART_HandleTypeDef *huart, float humidity, float temperature_c, float temperature_f);
+driver_7_seg_status_t driver_7_seg_init( SPI_HandleTypeDef *const hspi, TIM_HandleTypeDef *const htim,
+										 GPIO_TypeDef *const GPIOx, const uint16_t GPIO_Pin );
+/*
+ Sends a data buffer to the display with specified brightness levels.
+ */
+driver_7_seg_status_t driver_7_seg_send_buffer(const uint16_t *const data, const driver_7_seg_brightness_t *const brightness_level, const uint8_t size);
+
+
+
+

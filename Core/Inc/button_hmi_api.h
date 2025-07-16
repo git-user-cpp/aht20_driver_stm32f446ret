@@ -1,7 +1,7 @@
 /*
  * digital_thermomether
  * digital thermometer built using stm32f446ret, AHT20 sensor and multi-function shield
- * Copyright (C) 2025 Andrew Kushyk
+ * Copyright (C) 2025 Andrew Kushyk, Eldar Vanin
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -19,22 +19,23 @@
 
 #pragma once
 
-/*
- * enum for status returns
- */
-typedef enum {
-	AHT20_STATUS_OK = 1,
-	AHT20_STATUS_NOT_TRANSMITTED,
-	AHT20_STATUS_NOT_RECEIVED,
-	AHT20_STATUS_NOT_MEASURED,
-} aht20_status_t;
+#include "general_hmi_device_api.h"
+#include "buttons.h"
 
-/*
- * api for aht20 sensor
+/**
+ * @brief HMI device handler for button devices
+ *
+ * This structure uses hmi_device_handler_t interface
+ * to define functions to initialize and interact with
+ * button device
+ *
+ * - `b_hmi_init` - Initializes the button GPIO
+ * - `b_hmi_check_button_state_change` - Checks button state on button state change
+ * - `b_hmi_check_button_current_state` - Get current button state
+ * - `read_button` - Handles GPIO interrupt triggered by button
+ *
+ * These functions are static and decribed in button_hmi_api.c file
+ *
+ * @see hmi_device_handler_t
  */
-typedef struct {
-	aht20_status_t (*aht20_validate_calibration) (I2C_HandleTypeDef *hi2c);
-	aht20_status_t (*measure) (I2C_HandleTypeDef *hi2c, uint8_t *measured_data, uint16_t measured_data_size);
-	void (*calculate_measurments) (uint8_t *measured_data, float *humidity, float *temp_c, float *temp_f);
-	aht20_status_t (*soft_reset) (I2C_HandleTypeDef *hi2c);
-} aht20_sensor_api_t;
+extern hmi_device_handler_t button_hmi_api;

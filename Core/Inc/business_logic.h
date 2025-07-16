@@ -1,7 +1,7 @@
 /*
- * aht20_driver_stm32f446ret
- * driver for aht20 temperature and humidity sensor
- * Copyright (C) 2025 Andrew Kushyk
+ * digital_thermomether
+ * digital thermometer built using stm32f446ret, AHT20 sensor and multi-function shield
+ * Copyright (C) 2025 Andrew Kushyk, Andrii Ostapchuk
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published
@@ -28,16 +28,26 @@ typedef enum {
 } bl_status_t;
 
 /*
+ * initializes buttons
+ */
+bl_status_t bl_init_buttons(void);
+
+/*
  * runs calibration check. if wasn't calibrated, calibrates the sensor
  */
-bl_status_t bl_run_sensor(I2C_HandleTypeDef *hi2c, UART_HandleTypeDef *huart);
+bl_status_t bl_run_sensor(I2C_HandleTypeDef *hi2c);
 
 /*
  * processes and calculates sensor data
  */
-bl_status_t bl_process_sensor_data(I2C_HandleTypeDef *hi2c, UART_HandleTypeDef *huart);
+bl_status_t bl_process_sensor_data(I2C_HandleTypeDef *hi2c);
 
 /*
- * transmits formatted data to UART
+ * transmits formatted data to display via SPI
  */
-void bl_uart_transmit_sensor_data(UART_HandleTypeDef *huart);
+void bl_spi_transmit_sensor_data(void);
+
+/*
+ * interrupt callback
+ */
+void HAL_GPIO_EXTI_Callback(uint16_t gpio_pin);
