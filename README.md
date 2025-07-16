@@ -1,21 +1,21 @@
-# aht20_driver_stm32f446ret
-driver for AHT20 temperature and humidity sensor
+# digital_thermomether
+digital thermometer built using stm32f446ret, AHT20 sensor and multi-function shield
 
 ---
 
-![GitHub Release](https://img.shields.io/github/v/release/git-user-cpp/aht20_driver_stm32f446ret?style=flat-square&logo=github)
-![GitHub Repo stars](https://img.shields.io/github/stars/git-user-cpp/aht20_driver_stm32f446ret?style=flat-square&logo=github)
+![GitHub Release](https://img.shields.io/github/v/release/git-user-cpp/digital_thermometer?style=flat-square&logo=github)
+![GitHub Repo stars](https://img.shields.io/github/stars/git-user-cpp/digital_thermometer?style=flat-square&logo=github)
 
-![GitHub contributors](https://img.shields.io/github/contributors-anon/git-user-cpp/aht20_driver_stm32f446ret?style=flat-square&logo=github) ![GitHub last commit](https://img.shields.io/github/last-commit/git-user-cpp/aht20_driver_stm32f446ret?style=flat-square&logo=github)
+![GitHub contributors](https://img.shields.io/github/contributors-anon/git-user-cpp/digital_thermometer?style=flat-square&logo=github) ![GitHub last commit](https://img.shields.io/github/last-commit/git-user-cpp/digital_thermometer?style=flat-square&logo=github)
 
-![GitHub License](https://img.shields.io/github/license/git-user-cpp/aht20_driver_stm32f446ret?style=flat-square&logo=github)
+![GitHub License](https://img.shields.io/github/license/git-user-cpp/digital_thermometer?style=flat-square&logo=github)
 
 ---
 
 ## ⚠️ LICENSE ⚠️
 
-    aht20_driver_stm32f446ret
-    driver for AHT20 temperature and humidity sensor
+    digital_thermomether
+    digital thermometer built using stm32f446ret, AHT20 sensor and multi-function shield
     Copyright (C) 2025  Andrew Kushyk
    
     This program is free software: you can redistribute it and/or modify
