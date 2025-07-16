@@ -11,6 +11,8 @@ digital thermometer built using stm32f446ret, AHT20 sensor and multi-function sh
 ![GitHub License](https://img.shields.io/github/license/git-user-cpp/digital_thermometer?style=flat-square&logo=github)
 
 ---
+![1](https://github.com/user-attachments/assets/2a703c12-f6f9-4a5c-bfba-a3d1f6764483)
+---
 
 ## ⚠️ LICENSE ⚠️
 
